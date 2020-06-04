@@ -64,7 +64,8 @@ class DirectFolderBrowser(DirectObject):
             state=DGG.NORMAL,
         )
 
-        self.pathEntryWidth = self.screenWidthPx - 153
+        self.pathRightMargin = 153
+        self.pathEntryWidth = self.screenWidthPx - self.pathRightMargin
 
         self.pathEntry = DirectEntry(
             parent=self.mainFrame,
@@ -520,6 +521,7 @@ class DirectFolderBrowser(DirectObject):
             # This event isn't about our window.
             return
 
+
         if window is not None: # window is none if panda3d is not started
             if self.prevScreenSize == base.getSize():
                 return
@@ -532,15 +534,23 @@ class DirectFolderBrowser(DirectObject):
             # reposition and resize all gui elements
             self.mainFrame.setPos(self.screenWidthPx/2, 0, -self.screenHeightPx/2)
             self.mainFrame["frameSize"] = (-self.screenWidthPxHalf,self.screenWidthPxHalf,-self.screenHeightPxHalf,self.screenHeightPxHalf)
-            self.pathEntryWidth = self.screenWidthPx - 125
+
+            self.pathEntryWidth = self.screenWidthPx - self.pathRightMargin
             self.pathEntry.setPos(LPoint3f(-self.screenWidthPxHalf + 15, 0, self.screenHeightPxHalf - 25))
             self.pathEntry["width"] = self.pathEntryWidth/12
+            self.pathEntry.resetFrameSize()
+
+            # reposition top right icons
             x = self.pathEntryWidth/2-28
             self.btnReload.setPos(LPoint3f(x, 0, self.screenHeightPxHalf - 25))
             x += 28
             self.btnFolderUp.setPos(pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25))
             x += 28
             self.btnFolderNew.setPos(pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25))
+            x += 28
+            self.btnFolderShowHidden.setPos(pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25))
+
+            # resize the browsing area
             self.container["frameSize"] = (-self.screenWidthPxHalf+10, self.screenWidthPxHalf-10, -self.screenHeightPxHalf+50, self.screenHeightPxHalf-50)
             # Note: canvas size of the container will be reset in the
             #       folder Reload call at the end of this function
