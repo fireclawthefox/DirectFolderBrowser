@@ -11,10 +11,17 @@ This is a simple fullscreen file and folder browser with a basic featureset. Cur
 - Resizes with window size changes
 - Makes use of the <a href="https://github.com/fireclawthefox/DirectTooltip">Tooltip class</a>
 
+## Install
+Install the DirectFolderBrowser via pip
+
+```bash
+pip install DirectFolderBrowser
+```
+
 ## How to use
 To add a browser instance to your running Panda3D application, just instantiate it like shown here:
-```
-from DirectFolderBrowser import DirectFolderBrowser
+```python3
+from DirectFolderBrowser.DirectFolderBrowser import DirectFolderBrowser
 
 # this command will be called by the browser
 def callbackCommand(ok):
@@ -42,3 +49,11 @@ The DirectFolderBrowser accepts a few arguments.
 - <b>defaultFilename:</b> The filename that will be set by default, <i>only usefull if fileBrowser is True</i>
 - <b>fileExtensions:</b> A list of extensions. Only files with those extensions will be shown. <i>Only usefull if fileBrowser is True</i>
 - <b>tooltip:</b> An instance of the <a href="https://github.com/fireclawthefox/DirectTooltip">Tooltip class</a> to display tooltips for certain parts of the editor
+- <b>iconDir:</b> A directory path that contains replacement images. It must contain all required images which are:<br />
+    File.png<br />
+    Folder.png<br />
+    FolderNew.png<br />
+    FolderShowHidden.png<br />
+    FolderUp.png<br />
+    Reload.png
+    
