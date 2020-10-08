@@ -5,6 +5,7 @@
 # This file was created using the DirectGUI Designer
 
 import os
+import pathlib
 import math
 
 from direct.showbase.DirectObject import DirectObject
@@ -28,7 +29,7 @@ DGG.MWUP = PGButton.getPressPrefix() + MouseButton.wheel_up().getName() + '-'
 DGG.MWDOWN = PGButton.getPressPrefix() + MouseButton.wheel_down().getName() + '-'
 
 class DirectFolderBrowser(DirectObject):
-    def __init__(self, command, fileBrowser=False, defaultPath="~", defaultFilename="unnamed.txt", fileExtensions=[], tooltip=None):
+    def __init__(self, command, fileBrowser=False, defaultPath="~", defaultFilename="unnamed.txt", fileExtensions=[], tooltip=None, iconDir=None):
         """
         A simple file and folder browser
 
@@ -38,12 +39,23 @@ class DirectFolderBrowser(DirectObject):
         defaultFilename: The filename that will be set by default, only usefull if fileBrowser is True
         fileExtensions: A list of extensions. Only files with those extensions will be shown. Only usefull if fileBrowser is True
         tooltip: An instance of the Tooltip class to display tooltips for certain parts of the editor
+        iconDir: A directory path that contains replacement images. It must contain all required images which are:
+            File.png
+            Folder.png
+            FolderNew.png
+            FolderShowHidden.png
+            FolderUp.png
+            Reload.png
         """
         self.tt = tooltip
         self.command = command
         self.showFiles = fileBrowser
         self.fileExtensions = fileExtensions
         self.showHidden = False
+        if iconDir is None:
+            self.iconDir = str(pathlib.PurePosixPath(__file__).parent) + "/icons"
+        else:
+            self.iconDir = iconDir
 
         self.currentPath = os.path.expanduser(defaultPath)
         if not os.path.exists(self.currentPath):
@@ -95,7 +107,7 @@ class DirectFolderBrowser(DirectObject):
             frameSize=(-14, 14, -10, 18),
             pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25),
             command=self.folderReload,
-            image="icons/Reload.png",
+            image=f"{self.iconDir}/Reload.png",
             image_scale=14,
             image_pos=(0,0,4),
         )
@@ -115,7 +127,7 @@ class DirectFolderBrowser(DirectObject):
             frameSize=(-14, 14, -10, 18),
             pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25),
             command=self.folderUp,
-            image="icons/FolderUp.png",
+            image=f"{self.iconDir}/FolderUp.png",
             image_scale=14,
             image_pos=(0,0,4),
         )
@@ -135,7 +147,7 @@ class DirectFolderBrowser(DirectObject):
             frameSize=(-14, 14, -10, 18),
             pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25),
             command=self.folderNew,
-            image="icons/FolderNew.png",
+            image=f"{self.iconDir}/FolderNew.png",
             image_scale=14,
             image_pos=(0,0,4),
         )
@@ -155,7 +167,7 @@ class DirectFolderBrowser(DirectObject):
             frameSize=(-14, 14, -10, 18),
             pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25),
             command=self.folderShowHidden,
-            image="icons/FolderShowHidden.png",
+            image=f"{self.iconDir}/FolderShowHidden.png",
             image_scale=14,
             image_pos=(0,0,4),
         )
@@ -440,7 +452,7 @@ class DirectFolderBrowser(DirectObject):
                 name += "..."
         btn = DirectButton(
             parent=self.container.getCanvas(),
-            image="icons/Folder.png",
+            image=f"{self.iconDir}/Folder.png",
             image_scale=35,
             relief=1,
             frameColor = (
@@ -471,7 +483,7 @@ class DirectFolderBrowser(DirectObject):
                 name += "..."
         btn = DirectButton(
             parent=self.container.getCanvas(),
-            image="icons/File.png",
+            image=f"{self.iconDir}/File.png",
             image_scale=35,
             relief=1,
             frameColor = (
@@ -500,7 +512,7 @@ class DirectFolderBrowser(DirectObject):
             name = name[:-1]
         lbl = DirectLabel(
             parent=self.container.getCanvas(),
-            image="icons/File.png",
+            image=f"{self.iconDir}/File.png",
             image_scale=35,
             image_color=(0.9,0.5,0.5,1),
             relief=1,
