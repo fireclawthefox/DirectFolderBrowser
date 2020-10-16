@@ -27,10 +27,10 @@ from DirectFolderBrowser.DirectFolderBrowser import DirectFolderBrowser
 def callbackCommand(ok):
     if ok == 1:
         print("User Clicked OK")
-        
+
         # print the selected file
         print(browser.get())
-        
+
         browser.hide()
         # Destroy the browser if it's not needed anymore
         #browser.destroy()
@@ -42,6 +42,8 @@ def callbackCommand(ok):
 # show the browser as file browser
 browser = DirectFolderBrowser(callbackCommand, fileBrowser=True)
 ```
+
+### Parameters
 The DirectFolderBrowser accepts a few arguments.
 - <b>command:</b> The command that will be called on closing the browser
 - <b>fileBrowser:</b> If set to True the browser will show files, otherwise it will only show folders
@@ -56,3 +58,6 @@ The DirectFolderBrowser accepts a few arguments.
     FolderShowHidden.png<br />
     FolderUp.png<br />
     Reload.png<br />
+- <b>parent:</b> Another DirectGUI element which has pixel2d as root parent.<br />
+    The browser frame is placed centered so a frame for example should have equal sizes in horizontal and vertical directions<br />
+    e.g. frameSize=(-250,250,-200,200)<br />

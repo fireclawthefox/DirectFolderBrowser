@@ -29,7 +29,7 @@ DGG.MWUP = PGButton.getPressPrefix() + MouseButton.wheel_up().getName() + '-'
 DGG.MWDOWN = PGButton.getPressPrefix() + MouseButton.wheel_down().getName() + '-'
 
 class DirectFolderBrowser(DirectObject):
-    def __init__(self, command, fileBrowser=False, defaultPath="~", defaultFilename="unnamed.txt", fileExtensions=[], tooltip=None, iconDir=None):
+    def __init__(self, command, fileBrowser=False, defaultPath="~", defaultFilename="unnamed.txt", fileExtensions=[], tooltip=None, iconDir=None, parent=None):
         """
         A simple file and folder browser
 
@@ -46,12 +46,16 @@ class DirectFolderBrowser(DirectObject):
             FolderShowHidden.png
             FolderUp.png
             Reload.png
+        parent: Another DirectGUI element which has pixel2d as root parent.
+            The browser frame is placed centered so a frame for example should have equal sizes in horizontal and vertical directions
+            e.g. frameSize=(-250,250,-200,200)
         """
         self.tt = tooltip
         self.command = command
         self.showFiles = fileBrowser
         self.fileExtensions = fileExtensions
         self.showHidden = False
+        self.parent = parent
         if iconDir is None:
             self.iconDir = str(pathlib.PurePosixPath(__file__).parent) + "/icons"
         else:
@@ -62,17 +66,24 @@ class DirectFolderBrowser(DirectObject):
             self.currentPath = os.path.expanduser("~")
         self.previousPath = self.currentPath
 
-        self.screenWidthPx = base.getSize()[0]
+        if self.parent is None:
+            self.parent = base.pixel2d
+            self.screenWidthPx = base.getSize()[0]
+            self.screenHeightPx = base.getSize()[1]
+            self.position = LPoint3f(base.getSize()[0]/2, 0, -base.getSize()[1]/2)
+        else:
+            self.screenWidthPx = self.parent.getWidth()
+            self.screenHeightPx = self.parent.getHeight()
+            self.position = LPoint3f(0)
         self.screenWidthPxHalf = self.screenWidthPx * 0.5
-        self.screenHeightPx = base.getSize()[1]
         self.screenHeightPxHalf = self.screenHeightPx * 0.5
 
         self.mainFrame = DirectFrame(
             relief=1,
             frameSize=(-self.screenWidthPxHalf,self.screenWidthPxHalf,-self.screenHeightPxHalf,self.screenHeightPxHalf),
             frameColor=(1, 1, 1, 1),
-            pos=LPoint3f(base.getSize()[0]/2, 0, -base.getSize()[1]/2),
-            parent=base.pixel2d,
+            pos=self.position,
+            parent=self.parent,
             state=DGG.NORMAL,
         )
 
@@ -309,11 +320,13 @@ class DirectFolderBrowser(DirectObject):
 
         # handle window resizing
         self.prevScreenSize = base.getSize()
-        self.accept("window-event", self.windowEventHandler)
+        if self.parent is base.pixel2d:
+            self.accept("window-event", self.windowEventHandler)
 
     def show(self):
         self.mainFrame.show()
-        self.accept("window-event", self.windowEventHandler)
+        if self.parent is None:
+            self.accept("window-event", self.windowEventHandler)
 
     def hide(self):
         self.ignore("window-event")
