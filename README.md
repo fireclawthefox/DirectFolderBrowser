@@ -5,6 +5,7 @@ A file and folder browser for Panda3D using DirectGUI
 This is a simple fullscreen file and folder browser with a basic featureset. Currently implemented are:
 
 - Browsing files and folders
+- Display content as symbols or in a detailed list
 - Show/Hide hidden files (using unix like leading dot)
 - Create new folders
 - Filter by file extension
