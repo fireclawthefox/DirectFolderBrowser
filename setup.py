@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="DirectFolderBrowser",
-    version="20.11",
+    version="21.02",
     author="Fireclaw",
     author_email="fireclawthefox@gmail.com",
     description="A simple file and folder browser for Panda3D",
