@@ -5,7 +5,6 @@
 # This file was created using the DirectGUI Designer
 
 import os
-import pathlib
 
 from direct.showbase.DirectObject import DirectObject
 from direct.gui import DirectGuiGlobals as DGG
@@ -19,7 +18,8 @@ from panda3d.core import (
     LVecBase3f,
     LVecBase4f,
     TransparencyAttrib,
-    TextNode
+    TextNode,
+    Filename
 )
 
 from panda3d.core import PGButton, MouseButton
@@ -63,7 +63,9 @@ class DirectFolderBrowser(DirectObject):
         self.showHidden = False
         self.parent = parent
         if iconDir is None:
-            self.iconDir = str(pathlib.PurePosixPath(__file__).parent) + "/icons"
+            fn = Filename.fromOsSpecific(os.path.dirname(__file__))
+            fn.makeTrueCase()
+            self.iconDir = str(fn) + "/icons"
         else:
             self.iconDir = iconDir
         self.selectedViewType = "Symbol"
