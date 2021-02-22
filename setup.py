@@ -23,5 +23,8 @@ setuptools.setup(
         "Intended Audience :: End Users/Desktop",
         "Topic :: Desktop Environment :: File Managers",
     ],
+    install_requires=[
+        'panda3d',
+    ],
     python_requires='>=3.6',
 )
