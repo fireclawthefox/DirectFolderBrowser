@@ -80,21 +80,18 @@ def __createFolder(self, entry, xPos, zPos):
 
     btn = DirectButton(
         parent=self.container.getCanvas(),
-        image=f"{self.iconDir}/Folder.png",
+        image=loader.load_texture(f"{self.iconDir}/Folder.png", loaderOptions=self.imageOpts),
         image_scale=16,
         image_pos=(16,0,0),
         relief=1,
-        frameColor = (
-            (0.9, 0.9, 0.9, 0), # Normal
-            (0.95, 0.95, 1, 1), # Click
-            (0.9, 0.9, 1, 1), # Hover
-            (0.5, 0.5, 0.5, 1)), # Disabled
+        frameColor = self.theme.folder_background,
         frameSize=(0, self.screenWidthPxHalf*2, -16, 16),
         pos=LPoint3f(xPos, 0, zPos),
         text = name,
         text_scale=12,
         text_align=TextNode.ALeft,
         text_pos=(32,-4),
+        text_fg=self.theme.default_text_color,
         command=self.folderMoveIn,
         extraArgs=[entry.path]
     )
@@ -110,21 +107,18 @@ def __createFile(self, entry, xPos, zPos):
     name = entry.name
     btn = DirectButton(
         parent=self.container.getCanvas(),
-        image=f"{self.iconDir}/File.png",
+        image=loader.load_texture(f"{self.iconDir}/File.png", loaderOptions=self.imageOpts),
         image_scale=16,
         image_pos=(16,0,0),
         relief=1,
-        frameColor = (
-            (0.9, 0.9, 0.9, 0), # Normal
-            (0.95, 0.95, 1, 1), # Click
-            (0.9, 0.9, 1, 1), # Hover
-            (0.5, 0.5, 0.5, 1)), # Disabled
+        frameColor = self.theme.file_background,
         frameSize=(0, self.screenWidthPxHalf*2, -16, 16),
         pos=LPoint3f(xPos, 0, zPos),
         text = name,
         text_align=TextNode.ALeft,
         text_scale=12,
         text_pos=(32,-4),
+        text_fg=self.theme.default_text_color,
         command=self.txtFileName.set,
         extraArgs=[entry.name]
     )
@@ -140,10 +134,10 @@ def __createUnknown(self, entry, xPos, zPos):
     name = entry.name
     lbl = DirectLabel(
         parent=self.container.getCanvas(),
-        image=f"{self.iconDir}/File.png",
+        image=loader.load_texture(f"{self.iconDir}/File.png", loaderOptions=self.imageOpts),
         image_scale=16,
         image_pos=(16,0,0),
-        image_color=(0.9,0.5,0.5,1),
+        image_color=self.theme.unknown_image_tint,
         relief=1,
         frameColor = (0.7, 0.7, 0.7, 0),
         frameSize=(0, self.screenWidthPxHalf*2, -16, 16),
@@ -152,6 +146,7 @@ def __createUnknown(self, entry, xPos, zPos):
         text_align=TextNode.ALeft,
         text_scale=12,
         text_pos=(32,-4),
+        text_fg=self.theme.default_text_color,
     )
 
     lblInfo = __createMIMEInfo(self, lbl, entry)
@@ -174,6 +169,7 @@ def __createMIMEInfo(self, parent, entry, isFolder=False):
         text_align=TextNode.ALeft,
         text_scale=12,
         text_pos=(0,-4),
+        text_fg=self.theme.default_text_color,
     )
 
 def __createSizeInfo(self, parent, entry, isFolder=False):
@@ -188,6 +184,7 @@ def __createSizeInfo(self, parent, entry, isFolder=False):
         text_align=TextNode.ARight,
         text_scale=12,
         text_pos=(0,-4),
+        text_fg=self.theme.default_text_color,
     )
 
 def getSizeString(byteSize):

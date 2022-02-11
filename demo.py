@@ -1,5 +1,10 @@
 from direct.showbase.ShowBase import ShowBase
+from panda3d.core import loadPrcFileData
 from DirectFolderBrowser.DirectFolderBrowser import DirectFolderBrowser
+
+from DirectFolderBrowser.DarkTheme import Theme as DarkTheme
+
+loadPrcFileData("", "notify-level info")
 
 app = ShowBase()
 
@@ -17,6 +22,9 @@ def callbackCommand(ok):
         browser.destroy()
         exit(ok)
 # show the browser as file browser
-browser = DirectFolderBrowser(callbackCommand, fileBrowser=True)
+browser = DirectFolderBrowser(
+    callbackCommand,
+    fileBrowser=True,
+    theme=DarkTheme())
 
 app.run()

@@ -19,7 +19,9 @@ from panda3d.core import (
     LVecBase4f,
     TransparencyAttrib,
     TextNode,
-    Filename
+    Filename,
+    LoaderOptions,
+    ATS_none,
 )
 
 from panda3d.core import PGButton, MouseButton
@@ -29,13 +31,15 @@ DGG.MWDOWN = PGButton.getPressPrefix() + MouseButton.wheel_down().getName() + '-
 from .SymbolView import generate as symbolViewGenerate
 from .DetailView import generate as detailViewGenerate
 
+from .LightTheme import Theme as LightTheme
+
 VIEWTYPE = {
     "Symbol":symbolViewGenerate,
     "Detail":detailViewGenerate
 }
 
 class DirectFolderBrowser(DirectObject):
-    def __init__(self, command, fileBrowser=False, defaultPath="~", defaultFilename="unnamed.txt", fileExtensions=[], tooltip=None, iconDir=None, parent=None):
+    def __init__(self, command, fileBrowser=False, defaultPath="~", defaultFilename="unnamed.txt", fileExtensions=[], tooltip=None, iconDir=None, parent=None, theme=None):
         """
         A simple file and folder browser
 
@@ -56,13 +60,20 @@ class DirectFolderBrowser(DirectObject):
             The browser frame is placed centered so a frame for example should have equal sizes in horizontal and vertical directions
             e.g. frameSize=(-250,250,-200,200)
         """
+        self.theme = theme if theme is not None else LightTheme()
         self.tt = tooltip
         self.command = command
         self.showFiles = fileBrowser
         self.fileExtensions = fileExtensions
         self.showHidden = False
         self.parent = parent
-        if iconDir is None:
+
+        self.imageOpts = LoaderOptions()
+        self.imageOpts.set_auto_texture_scale(ATS_none)
+
+        if self.theme.icon_dir is not None:
+            self.iconDir = self.theme.icon_dir
+        elif iconDir is None:
             fn = Filename.fromOsSpecific(os.path.dirname(__file__))
             fn.makeTrueCase()
             self.iconDir = str(fn) + "/icons"
@@ -90,7 +101,7 @@ class DirectFolderBrowser(DirectObject):
         self.mainFrame = DirectFrame(
             relief=1,
             frameSize=(-self.screenWidthPxHalf,self.screenWidthPxHalf,-self.screenHeightPxHalf,self.screenHeightPxHalf),
-            frameColor=(1, 1, 1, 1),
+            frameColor=self.theme.main_background,
             pos=self.position,
             parent=self.parent,
             state=DGG.NORMAL,
@@ -101,9 +112,10 @@ class DirectFolderBrowser(DirectObject):
 
         # The path entry on top of the window
         self.pathEntry = DirectEntry(
+            text_fg=self.theme.default_text_color,
             parent=self.mainFrame,
             relief=DGG.SUNKEN,
-            frameColor=(1, 1, 1, 1),
+            frameColor=self.theme.entry_background,
             pad=(0.2, 0.2),
             pos=LPoint3f(-self.screenWidthPxHalf + 15, 0, self.screenHeightPxHalf - 25),
             scale=12,
@@ -126,15 +138,11 @@ class DirectFolderBrowser(DirectObject):
         self.btnReload = DirectButton(
             parent=self.mainFrame,
             relief=1,
-            frameColor = (
-                (0.8, 0.8, 0.8, 1), # Normal
-                (0.9, 0.9, 1, 1), # Click
-                (0.8, 0.8, 1, 1), # Hover
-                (0.5, 0.5, 0.5, 1)), # Disabled
+            frameColor = self.theme.icon_button_background,
             frameSize=(-14, 14, -10, 18),
             pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25),
             command=self.folderReload,
-            image=f"{self.iconDir}/Reload.png",
+            image=loader.load_texture(f"{self.iconDir}/Reload.png", loaderOptions=self.imageOpts),
             image_scale=14,
             image_pos=(0,0,4),
         )
@@ -148,15 +156,11 @@ class DirectFolderBrowser(DirectObject):
         self.btnFolderUp = DirectButton(
             parent=self.mainFrame,
             relief=1,
-            frameColor = (
-                (0.8, 0.8, 0.8, 1), # Normal
-                (0.9, 0.9, 1, 1), # Click
-                (0.8, 0.8, 1, 1), # Hover
-                (0.5, 0.5, 0.5, 1)), # Disabled
+            frameColor = self.theme.icon_button_background,
             frameSize=(-14, 14, -10, 18),
             pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25),
             command=self.folderUp,
-            image=f"{self.iconDir}/FolderUp.png",
+            image=loader.load_texture(f"{self.iconDir}/FolderUp.png", loaderOptions=self.imageOpts),
             image_scale=14,
             image_pos=(0,0,4),
         )
@@ -170,15 +174,11 @@ class DirectFolderBrowser(DirectObject):
         self.btnFolderNew = DirectButton(
             parent=self.mainFrame,
             relief=1,
-            frameColor = (
-                (0.8, 0.8, 0.8, 1), # Normal
-                (0.9, 0.9, 1, 1), # Click
-                (0.8, 0.8, 1, 1), # Hover
-                (0.5, 0.5, 0.5, 1)), # Disabled
+            frameColor = self.theme.icon_button_background,
             frameSize=(-14, 14, -10, 18),
             pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25),
             command=self.folderNew,
-            image=f"{self.iconDir}/FolderNew.png",
+            image=loader.load_texture(f"{self.iconDir}/FolderNew.png", loaderOptions=self.imageOpts),
             image_scale=14,
             image_pos=(0,0,4),
         )
@@ -192,15 +192,11 @@ class DirectFolderBrowser(DirectObject):
         self.btnFolderShowHidden = DirectButton(
             parent=self.mainFrame,
             relief=1,
-            frameColor = (
-                (0.8, 0.8, 0.8, 1), # Normal
-                (0.9, 0.9, 1, 1), # Click
-                (0.8, 0.8, 1, 1), # Hover
-                (0.5, 0.5, 0.5, 1)), # Disabled
+            frameColor = self.theme.icon_button_background,
             frameSize=(-14, 14, -10, 18),
             pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25),
             command=self.folderShowHidden,
-            image=f"{self.iconDir}/FolderShowHidden.png",
+            image=loader.load_texture(f"{self.iconDir}/FolderShowHidden.png", loaderOptions=self.imageOpts),
             image_scale=14,
             image_pos=(0,0,4),
         )
@@ -214,15 +210,11 @@ class DirectFolderBrowser(DirectObject):
         self.btnViewType = DirectButton(
             parent=self.mainFrame,
             relief=1,
-            frameColor = (
-                (0.8, 0.8, 0.8, 1), # Normal
-                (0.9, 0.9, 1, 1), # Click
-                (0.8, 0.8, 1, 1), # Hover
-                (0.5, 0.5, 0.5, 1)), # Disabled
+            frameColor = self.theme.icon_button_background,
             frameSize=(-14, 14, -10, 18),
             pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25),
             command=self.toggleViewType,
-            image=f"{self.iconDir}/ViewTypeSymbol.png",
+            image=loader.load_texture(f"{self.iconDir}/ViewTypeSymbol.png", loaderOptions=self.imageOpts),
             image_scale=14,
             image_pos=(0,0,4),
         )
@@ -234,15 +226,11 @@ class DirectFolderBrowser(DirectObject):
         # --------------
         # CONTENT FRAME
         # --------------
-        color = (
-            (0.8, 0.8, 0.8, 1), # Normal
-            (0.9, 0.9, 1, 1), # Click
-            (0.8, 0.8, 1, 1), # Hover
-            (0.5, 0.5, 0.5, 1)) # Disabled
+        color = self.theme.scrollbar_controlls_color
         self.container = DirectScrolledFrame(
             relief=DGG.RIDGE,
             borderWidth=(2, 2),
-            frameColor=(1, 1, 1, 1),
+            frameColor=self.theme.main_background,
             frameSize=(-self.screenWidthPxHalf+10, self.screenWidthPxHalf-10, -self.screenHeightPxHalf+50, self.screenHeightPxHalf-50),
             canvasSize=(-self.screenWidthPxHalf+31, self.screenWidthPxHalf-10, -self.screenHeightPxHalf+50, self.screenHeightPxHalf-50),
             pos=LPoint3f(0, 0, 0),
@@ -255,12 +243,14 @@ class DirectFolderBrowser(DirectObject):
             verticalScroll_thumb_frameColor=color,
             verticalScroll_incButton_frameColor=color,
             verticalScroll_decButton_frameColor=color,
+            verticalScroll_frameColor=self.theme.scroll_background,
             horizontalScroll_thumb_relief=DGG.FLAT,
             horizontalScroll_incButton_relief=DGG.FLAT,
             horizontalScroll_decButton_relief=DGG.FLAT,
             horizontalScroll_thumb_frameColor=color,
             horizontalScroll_incButton_frameColor=color,
             horizontalScroll_decButton_frameColor=color,
+            horizontalScroll_frameColor=self.theme.scroll_background,
             state=DGG.NORMAL,
         )
         self.container.bind(DGG.MWDOWN, self.scroll, [0.01])
@@ -270,15 +260,12 @@ class DirectFolderBrowser(DirectObject):
         self.btnOk = DirectButton(
             parent=self.mainFrame,
             relief=1,
-            frameColor = (
-                (0.8, 0.8, 0.8, 1), # Normal
-                (0.9, 0.9, 1, 1), # Click
-                (0.8, 0.8, 1, 1), # Hover
-                (0.5, 0.5, 0.5, 1)), # Disabled
+            frameColor = self.theme.text_button_background,
             frameSize=(-45, 45, -6, 14),
             pos=LPoint3f(self.screenWidthPxHalf-160, 0, -self.screenHeightPxHalf+25),
             text = "ok",
             text_scale=12,
+            text_fg=self.theme.default_text_color,
             command=command,
             extraArgs=[1],
         )
@@ -287,15 +274,12 @@ class DirectFolderBrowser(DirectObject):
         self.btnCancel = DirectButton(
             parent=self.mainFrame,
             relief=1,
-            frameColor = (
-                (0.8, 0.8, 0.8, 1), # Normal
-                (0.9, 0.9, 1, 1), # Click
-                (0.8, 0.8, 1, 1), # Hover
-                (0.5, 0.5, 0.5, 1)), # Disabled
+            frameColor = self.theme.text_button_background,
             frameSize=(-45, 45, -6, 14),
             pos=LPoint3f(self.screenWidthPxHalf-55, 0, -self.screenHeightPxHalf+25),
             text = "Cancel",
             text_scale=12,
+            text_fg=self.theme.default_text_color,
             command=command,
             extraArgs=[0]
         )
@@ -303,9 +287,10 @@ class DirectFolderBrowser(DirectObject):
         # SELECTED FILE ENTRY FIELD
         if self.showFiles:
             self.txtFileName = DirectEntry(
+                text_fg=self.theme.default_text_color,
                 parent=self.mainFrame,
                 relief=DGG.SUNKEN,
-                frameColor=(1, 1, 1, 1),
+                frameColor=self.theme.entry_background,
                 pad=(0.2, 0.2),
                 pos=LPoint3f(-self.screenWidthPxHalf+25, 0, -self.screenHeightPxHalf+25),
                 scale=12,
@@ -328,7 +313,7 @@ class DirectFolderBrowser(DirectObject):
             relief=1,
             frameSize=(-self.screenWidthPxHalf+10,self.screenWidthPxHalf-10,-20,20),
             pos=LPoint3f(0, 0, self.screenHeightPxHalf-55),
-            frameColor=(0.5,0.5,0.5,1),
+            frameColor=self.theme.popup_frame_background,
         )
 
         # LABEL FOR NEW FOLDER NAME ENTRY
@@ -336,6 +321,7 @@ class DirectFolderBrowser(DirectObject):
             parent=self.newFolderFrame,
             text="New Folder Name",
             text_scale=12,
+            text_fg=self.theme.default_text_color,
             frameColor=(0,0,0,0),
             text_align=TextNode.ALeft,
             pos=(-self.screenWidthPxHalf+15, 0, -3),
@@ -343,9 +329,10 @@ class DirectFolderBrowser(DirectObject):
 
         # ENTRY FOR THE NEW FOLDER NAME
         self.folderName = DirectEntry(
+            text_fg=self.theme.default_text_color,
             parent=self.newFolderFrame,
             relief=DGG.SUNKEN,
-            frameColor=(1, 1, 1, 1),
+            frameColor=self.theme.entry_background,
             pad=(0.2, 0.2),
             pos=LPoint3f(-self.screenWidthPxHalf+25 + self.txtNewFolderName.getWidth(), 0, -4),
             scale=12,
@@ -363,15 +350,12 @@ class DirectFolderBrowser(DirectObject):
         self.btnCreate = DirectButton(
             parent=self.newFolderFrame,
             relief=1,
-            frameColor = (
-                (0.8, 0.8, 0.8, 1), # Normal
-                (0.9, 0.9, 1, 1), # Click
-                (0.8, 0.8, 1, 1), # Hover
-                (0.5, 0.5, 0.5, 1)), # Disabled
+            frameColor = self.theme.text_button_background,
             frameSize=(-45, 45, -6, 14),
             pos=LPoint3f(self.screenWidthPxHalf-65, 0, -4),
             text = "Create",
             text_scale=12,
+            text_fg=self.theme.default_text_color,
             command=self.folderCreate,
             extraArgs=[0]
         )
@@ -467,10 +451,10 @@ class DirectFolderBrowser(DirectObject):
     def toggleViewType(self):
         if self.selectedViewType == "Symbol":
             self.selectedViewType = "Detail"
-            self.btnViewType["image"] = f"{self.iconDir}/ViewTypeDetail.png"
+            self.btnViewType["image"] = loader.load_texture(f"{self.iconDir}/ViewTypeDetail.png", loaderOptions=self.imageOpts)
         else:
             self.selectedViewType = "Symbol"
-            self.btnViewType["image"] = f"{self.iconDir}/ViewTypeSymbol.png"
+            self.btnViewType["image"] = loader.load_texture(f"{self.iconDir}/ViewTypeSymbol.png", loaderOptions=self.imageOpts)
 
         self.folderReload()
 

@@ -81,19 +81,16 @@ def __createFolder(self, entry, xPos, zPos):
             name += "..."
     btn = DirectButton(
         parent=self.container.getCanvas(),
-        image=f"{self.iconDir}/Folder.png",
+        image=loader.load_texture(f"{self.iconDir}/Folder.png", loaderOptions=self.imageOpts),
         image_scale=35,
         relief=1,
-        frameColor = (
-            (0.9, 0.9, 0.9, 0), # Normal
-            (0.95, 0.95, 1, 1), # Click
-            (0.9, 0.9, 1, 1), # Hover
-            (0.5, 0.5, 0.5, 1)), # Disabled
+        frameColor = self.theme.folder_background,
         frameSize=(-40, 40, -40, 40),
         pos=LPoint3f(xPos, 0, zPos),
         text = name,
         text_scale=12,
         text_pos=(0,-40),
+        text_fg=self.theme.default_text_color,
         command=self.folderMoveIn,
         extraArgs=[entry.path]
     )
@@ -112,19 +109,16 @@ def __createFile(self, filename, xPos, zPos):
             name += "..."
     btn = DirectButton(
         parent=self.container.getCanvas(),
-        image=f"{self.iconDir}/File.png",
+        image=loader.load_texture(f"{self.iconDir}/File.png", loaderOptions=self.imageOpts),
         image_scale=35,
         relief=1,
-        frameColor = (
-            (0.9, 0.9, 0.9, 0), # Normal
-            (0.95, 0.95, 1, 1), # Click
-            (0.9, 0.9, 1, 1), # Hover
-            (0.5, 0.5, 0.5, 1)), # Disabled
+        frameColor = self.theme.file_background,
         frameSize=(-40, 40, -40, 40),
         pos=LPoint3f(xPos, 0, zPos),
         text = name,
         text_scale=12,
         text_pos=(0,-40),
+        text_fg=self.theme.default_text_color,
         command=self.txtFileName.set,
         extraArgs=[filename]
     )
@@ -141,9 +135,9 @@ def __createUnknown(self, filename, xPos, zPos):
         name = name[:-1]
     lbl = DirectLabel(
         parent=self.container.getCanvas(),
-        image=f"{self.iconDir}/File.png",
+        image=loader.load_texture(f"{self.iconDir}/File.png", loaderOptions=self.imageOpts),
         image_scale=35,
-        image_color=(0.9,0.5,0.5,1),
+        image_color=self.theme.unknown_image_tint,
         relief=1,
         frameColor = (0.7, 0.7, 0.7, 0),
         frameSize=(-40, 40, -40, 40),
@@ -151,6 +145,7 @@ def __createUnknown(self, filename, xPos, zPos):
         text = name,
         text_scale=12,
         text_pos=(0,-40),
+        text_fg=self.theme.default_text_color,
     )
     lbl.bind(DGG.MWDOWN, self.scroll, [0.01])
     lbl.bind(DGG.MWUP, self.scroll, [-0.01])
