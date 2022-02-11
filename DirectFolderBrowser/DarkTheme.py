@@ -5,7 +5,7 @@ class Theme:
     icon_dir = ""
     main_background = (0.2, 0.2, 0.2, 1)
     entry_background = (0.2, 0.2, 0.2, 1)
-    default_text_color = (1, 1, 1, 1)
+    default_text_color = (0.8, 0.8, 0.8, 1)
     icon_button_background = (
         (0.2, 0.2, 0.2, 1),
         (0.3, 0.3, 0.5, 1),
