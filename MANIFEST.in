@@ -1,1 +1,2 @@
 include DirectFolderBrowser/icons/*.png
+include DirectFolderBrowser/icons_dark/*.png
