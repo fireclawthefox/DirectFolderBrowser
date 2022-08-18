@@ -35,6 +35,7 @@ class Theme:
         (0.15, 0.15, 0.25, 1), # Hover
         (0.1, 0.1, 0.1, 1)) # Disabled
     unknown_image_tint = (0.9, 0.5, 0.5, 1)
+    dialog_color = (0.18, 0.18, 0.18, 1)
 
     def __init__(self):
         fn = Filename.fromOsSpecific(os.path.dirname(__file__))

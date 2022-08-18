@@ -4,6 +4,7 @@
 
 # This file was created using the DirectGUI Designer
 
+import sys
 import os
 
 from direct.showbase.DirectObject import DirectObject
@@ -13,6 +14,7 @@ from direct.gui.DirectEntry import DirectEntry
 from direct.gui.DirectScrolledFrame import DirectScrolledFrame
 from direct.gui.DirectButton import DirectButton
 from direct.gui.DirectLabel import DirectLabel
+from direct.gui.DirectDialog import YesNoDialog
 from panda3d.core import (
     LPoint3f,
     LVecBase3f,
@@ -39,7 +41,18 @@ VIEWTYPE = {
 }
 
 class DirectFolderBrowser(DirectObject):
-    def __init__(self, command, fileBrowser=False, defaultPath="~", defaultFilename="unnamed.txt", fileExtensions=[], tooltip=None, iconDir=None, parent=None, theme=None):
+    def __init__(
+            self,
+            command,
+            fileBrowser=False,
+            defaultPath="~",
+            defaultFilename="unnamed.txt",
+            fileExtensions=[],
+            tooltip=None,
+            iconDir=None,
+            parent=None,
+            theme=None,
+            askForOverwrite=False):
         """
         A simple file and folder browser
 
@@ -59,6 +72,7 @@ class DirectFolderBrowser(DirectObject):
         parent: Another DirectGUI element which has pixel2d as root parent.
             The browser frame is placed centered so a frame for example should have equal sizes in horizontal and vertical directions
             e.g. frameSize=(-250,250,-200,200)
+        askForOverwrite: If an existing file is selected, a dialog will pop up ask the user if the file should be overwritten.
         """
         self.theme = theme if theme is not None else LightTheme()
         self.tt = tooltip
@@ -67,6 +81,10 @@ class DirectFolderBrowser(DirectObject):
         self.fileExtensions = fileExtensions
         self.showHidden = False
         self.parent = parent
+        self.askForOverwrite = askForOverwrite
+
+        self.dlgOverwrite = None
+        self.dlgBackground = None
 
         self.imageOpts = LoaderOptions()
         self.imageOpts.set_auto_texture_scale(ATS_none)
@@ -266,7 +284,7 @@ class DirectFolderBrowser(DirectObject):
             text = "ok",
             text_scale=12,
             text_fg=self.theme.default_text_color,
-            command=command,
+            command=self.runCheckCommand,
             extraArgs=[1],
         )
 
@@ -280,7 +298,7 @@ class DirectFolderBrowser(DirectObject):
             text = "Cancel",
             text_scale=12,
             text_fg=self.theme.default_text_color,
-            command=command,
+            command=self.runCheckCommand,
             extraArgs=[0]
         )
 
@@ -373,6 +391,52 @@ class DirectFolderBrowser(DirectObject):
         if self.parent is base.pixel2d:
             self.accept("window-event", self.windowEventHandler)
 
+    def __executeCommand(self, arg):
+        if self.askForOverwrite:
+            if self.dlgOverwrite is not None:
+                self.dlgOverwrite.destroy()
+                self.dlgOverwrite = None
+                self.dlgBackground.destroy()
+                self.dlgBackground = None
+                if arg == 0:
+                    # User don't want to overwrite the file, give him a chance
+                    # to select another one
+                    return
+        self.command(arg)
+
+    def runCheckCommand(self, arg):
+        if self.askForOverwrite \
+        and os.path.exists(self.get())\
+        and arg == 1:
+            self.dlgBackground = DirectFrame(
+                # we want this backdrop frame to cover everything
+                frameSize=(-sys.maxsize,sys.maxsize,-sys.maxsize,sys.maxsize),
+                parent=self.mainFrame,
+                frameColor=(0,0,0,0.25),
+                suppressKeys=True,
+                state=DGG.NORMAL)
+            self.dlgOverwrite = YesNoDialog(
+                text=f"Overwrite?\n\nA file named \"{self.txtFileName.get(True)}\" already exist.\nDo you want to overwrite the existing file?",
+                relief=DGG.RIDGE,
+                text_align=TextNode.ACenter,
+                frameColor=self.theme.dialog_color,
+                pad=(25,15),
+                sortOrder=1,
+                text_scale=16,
+                text_fg=self.theme.default_text_color,
+                midPad=15,
+                button_relief=1,
+                button_frameColor = self.theme.text_button_background,
+                button_text_scale=16,
+                button_text_fg=self.theme.default_text_color,
+                button_pad=(25, 5),
+                command=self.__executeCommand,
+                suppressKeys=True,
+                fadeScreen=1,
+                parent=self.mainFrame)
+        else:
+            self.__executeCommand(arg)
+
     def show(self):
         self.mainFrame.show()
         if self.parent is None:
@@ -395,7 +459,7 @@ class DirectFolderBrowser(DirectObject):
         return self.currentPath
 
     def filenameAccept(self, filename):
-        self.command(1)
+        self.runCheckCommand(1)
 
     def entryAccept(self, path):
         self.folderReload()

@@ -32,3 +32,4 @@ class Theme:
         (0.9, 0.9, 1, 1), # Hover
         (0.5, 0.5, 0.5, 1)) # Disabled
     unknown_image_tint = (0.9, 0.5, 0.5, 1)
+    dialog_color = (0.9, 0.9, 0.9, 1)

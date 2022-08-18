@@ -25,6 +25,8 @@ def callbackCommand(ok):
 browser = DirectFolderBrowser(
     callbackCommand,
     fileBrowser=True,
-    theme=DarkTheme())
+    # to enable dark mode, uncomment the folowing line
+    #theme=DarkTheme(),
+    askForOverwrite=True)
 
 app.run()
