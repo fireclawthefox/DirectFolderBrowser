@@ -62,3 +62,8 @@ The DirectFolderBrowser accepts a few arguments.
 - <b>parent:</b> Another DirectGUI element which has pixel2d as root parent.<br />
     The browser frame is placed centered so a frame for example should have equal sizes in horizontal and vertical directions<br />
     e.g. frameSize=(-250,250,-200,200)<br />
+- <b>askForOverwrite:</b> If an existing file is selected, a dialog will pop up ask the user if the file should be overwritten.<br />
+- <b>oneClickNavigate:</b> If true, navigating into folders is done with a single click rather than double. Also configurable via the boolean "DirectFolderBrowser-one-click-navigate" configuration variable.<br />
+- <b>usePathBar:</b> Determines if selected files should be set in the path bar or in a dedicated selected file bar.<br />
+- <b>title:</b> If a title is given it will create a title bar at the top of the browser frame displaying the title text, if title is an empty string, the title bar will be collapsed.<br />
+- <b>fileFilters:</b> A dictionary containing a display text as key and a list of file extension strings that should be used when selected. <b>NOTE:</b> This will overwrite the fileExtensions parameter!<br />
