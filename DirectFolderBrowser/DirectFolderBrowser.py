@@ -56,7 +56,8 @@ class DirectFolderBrowser(DirectObject):
             theme=None,
             askForOverwrite=False,
             oneClickNavigate=True,
-            usePathBar=False):
+            usePathBar=False,
+            title="Browser"):
         """
         A simple file and folder browser
 
@@ -79,6 +80,7 @@ class DirectFolderBrowser(DirectObject):
         askForOverwrite: If an existing file is selected, a dialog will pop up ask the user if the file should be overwritten.
         oneClickNavigate: If true, navigating into folders is done with a single click rather than double. Also configurable via the boolean "DirectFolderBrowser-one-click-navigate" configuration variable
         usePathBar: Determines if selected files should be set in the path bar or in a dedicated selected file bar
+        title: If a title is given it will create a title bar at the top of the browser frame displaying the title text, if title is an empty string, the title bar will be collapsed
         """
         self.theme = theme if theme is not None else LightTheme()
         self.tt = tooltip
@@ -94,6 +96,7 @@ class DirectFolderBrowser(DirectObject):
         self.oneClickNavigate = ConfigVariableBool("DirectFolderBrowser-one-click-navigate", oneClickNavigate).getValue()
         self.defaultFilename = defaultFilename
         self.usePathBar = usePathBar
+        self.title = title
 
         self.dlgOverwrite = None
         self.dlgBackground = None
@@ -132,6 +135,9 @@ class DirectFolderBrowser(DirectObject):
             relief=1,
             frameSize=(-self.screenWidthPxHalf,self.screenWidthPxHalf,-self.screenHeightPxHalf,self.screenHeightPxHalf),
             frameColor=self.theme.main_background,
+            text=title,
+            text_scale=16,
+            text_pos=(0, self.screenHeightPxHalf-20),
             pos=self.position,
             parent=self.parent,
             state=DGG.NORMAL,
@@ -142,6 +148,8 @@ class DirectFolderBrowser(DirectObject):
         self.pathRightMargin = 155 # NOTE: Add 28 for each button to the right + 15px margin
         self.pathEntryWidth = self.screenWidthPx - self.pathRightMargin - 28
 
+        top = 50 if self.title != "" else 25
+
         # The path entry on top of the window
         self.pathEntry = DirectEntry(
             text_fg=self.theme.default_text_color,
@@ -149,7 +157,7 @@ class DirectFolderBrowser(DirectObject):
             relief=DGG.SUNKEN,
             frameColor=self.theme.entry_background,
             pad=(0.2, 0.2),
-            pos=LPoint3f(-self.screenWidthPxHalf + 15, 0, self.screenHeightPxHalf - 25),
+            pos=LPoint3f(-self.screenWidthPxHalf + 15, 0, self.screenHeightPxHalf - top),
             scale=12,
             width=self.pathEntryWidth/12,
             overflow=True,
@@ -172,7 +180,7 @@ class DirectFolderBrowser(DirectObject):
             relief=1,
             frameColor = self.theme.icon_button_background,
             frameSize=(-14, 14, -10, 18),
-            pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25),
+            pos=LPoint3f(x, 0, self.screenHeightPxHalf - top),
             command=self.folderReload,
             image=loader.load_texture(f"{self.iconDir}/Reload.png", loaderOptions=self.imageOpts),
             image_scale=14,
@@ -190,7 +198,7 @@ class DirectFolderBrowser(DirectObject):
             relief=1,
             frameColor = self.theme.icon_button_background,
             frameSize=(-14, 14, -10, 18),
-            pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25),
+            pos=LPoint3f(x, 0, self.screenHeightPxHalf - top),
             command=self.folderUp,
             image=loader.load_texture(f"{self.iconDir}/FolderUp.png", loaderOptions=self.imageOpts),
             image_scale=14,
@@ -208,7 +216,7 @@ class DirectFolderBrowser(DirectObject):
             relief=1,
             frameColor = self.theme.icon_button_background,
             frameSize=(-14, 14, -10, 18),
-            pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25),
+            pos=LPoint3f(x, 0, self.screenHeightPxHalf - top),
             command=self.folderNew,
             image=loader.load_texture(f"{self.iconDir}/FolderNew.png", loaderOptions=self.imageOpts),
             image_scale=14,
@@ -226,7 +234,7 @@ class DirectFolderBrowser(DirectObject):
             relief=1,
             frameColor = self.theme.icon_button_background,
             frameSize=(-14, 14, -10, 18),
-            pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25),
+            pos=LPoint3f(x, 0, self.screenHeightPxHalf - top),
             command=self.folderShowHidden,
             image=loader.load_texture(f"{self.iconDir}/FolderShowHidden.png", loaderOptions=self.imageOpts),
             image_scale=14,
@@ -244,7 +252,7 @@ class DirectFolderBrowser(DirectObject):
             relief=1,
             frameColor = self.theme.icon_button_background,
             frameSize=(-14, 14, -10, 18),
-            pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25),
+            pos=LPoint3f(x, 0, self.screenHeightPxHalf - top),
             command=self.toggleViewType,
             image=loader.load_texture(f"{self.iconDir}/ViewTypeSymbol.png", loaderOptions=self.imageOpts),
             image_scale=14,
@@ -255,6 +263,8 @@ class DirectFolderBrowser(DirectObject):
             self.btnViewType.bind(DGG.ENTER, self.tt.show, ["Toggle view between Symbols and Detail list"])
             self.btnViewType.bind(DGG.EXIT, self.tt.hide)
 
+        top += 25
+
         # --------------
         # CONTENT FRAME
         # --------------
@@ -263,8 +273,8 @@ class DirectFolderBrowser(DirectObject):
             relief=DGG.RIDGE,
             borderWidth=(2, 2),
             frameColor=self.theme.main_background,
-            frameSize=(-self.screenWidthPxHalf+10, self.screenWidthPxHalf-10, -self.screenHeightPxHalf+50, self.screenHeightPxHalf-50),
-            canvasSize=(-self.screenWidthPxHalf+31, self.screenWidthPxHalf-10, -self.screenHeightPxHalf+50, self.screenHeightPxHalf-50),
+            frameSize=(-self.screenWidthPxHalf+10, self.screenWidthPxHalf-10, -self.screenHeightPxHalf+50, self.screenHeightPxHalf-top),
+            canvasSize=(-self.screenWidthPxHalf+31, self.screenWidthPxHalf-10, -self.screenHeightPxHalf+50, self.screenHeightPxHalf-top),
             pos=LPoint3f(0, 0, 0),
             parent=self.mainFrame,
             scrollBarWidth=20,
@@ -347,7 +357,7 @@ class DirectFolderBrowser(DirectObject):
             parent=self.mainFrame,
             relief=1,
             frameSize=(-self.screenWidthPxHalf+10,self.screenWidthPxHalf-10,-20,20),
-            pos=LPoint3f(0, 0, self.screenHeightPxHalf-55),
+            pos=LPoint3f(0, 0, self.screenHeightPxHalf-(top+5)),
             frameColor=self.theme.popup_frame_background,
         )
 
@@ -608,30 +618,33 @@ class DirectFolderBrowser(DirectObject):
             self.screenWidthPxHalf = self.screenWidthPx * 0.5
             self.screenHeightPx = base.getSize()[1]
             self.screenHeightPxHalf = self.screenHeightPx * 0.5
+            top = 50 if self.title != "" else 25
 
             # reposition and resize all gui elements
             self.mainFrame.setPos(self.screenWidthPx/2, 0, -self.screenHeightPx/2)
             self.mainFrame["frameSize"] = (-self.screenWidthPxHalf,self.screenWidthPxHalf,-self.screenHeightPxHalf,self.screenHeightPxHalf)
 
             self.pathEntryWidth = self.screenWidthPx - self.pathRightMargin - 28
-            self.pathEntry.setPos(LPoint3f(-self.screenWidthPxHalf + 15, 0, self.screenHeightPxHalf - 25))
+            self.pathEntry.setPos(LPoint3f(-self.screenWidthPxHalf + 15, 0, self.screenHeightPxHalf - top))
             self.pathEntry["width"] = self.pathEntryWidth/12
             self.pathEntry.resetFrameSize()
 
             # reposition top right icons
             x = self.screenWidthPxHalf - self.pathRightMargin + 14
-            self.btnReload.setPos(LPoint3f(x, 0, self.screenHeightPxHalf - 25))
+            self.btnReload.setPos(LPoint3f(x, 0, self.screenHeightPxHalf - top))
             x += 28
-            self.btnFolderUp.setPos(pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25))
+            self.btnFolderUp.setPos(pos=LPoint3f(x, 0, self.screenHeightPxHalf - top))
             x += 28
-            self.btnFolderNew.setPos(pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25))
+            self.btnFolderNew.setPos(pos=LPoint3f(x, 0, self.screenHeightPxHalf - top))
             x += 28
-            self.btnFolderShowHidden.setPos(pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25))
+            self.btnFolderShowHidden.setPos(pos=LPoint3f(x, 0, self.screenHeightPxHalf - top))
             x += 28
-            self.btnViewType.setPos(pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25))
+            self.btnViewType.setPos(pos=LPoint3f(x, 0, self.screenHeightPxHalf - top))
+
+            top += 25
 
             # resize the browsing area
-            self.container["frameSize"] = (-self.screenWidthPxHalf+10, self.screenWidthPxHalf-10, -self.screenHeightPxHalf+50, self.screenHeightPxHalf-50)
+            self.container["frameSize"] = (-self.screenWidthPxHalf+10, self.screenWidthPxHalf-10, -self.screenHeightPxHalf+50, self.screenHeightPxHalf-top)
             # Note: canvas size of the container will be reset in the
             #       folder Reload call at the end of this function
             self.btnOk.setPos(LPoint3f(self.screenWidthPxHalf-160, 0, -self.screenHeightPxHalf+25))
@@ -641,7 +654,7 @@ class DirectFolderBrowser(DirectObject):
                 self.txtFileNameWidth = self.screenWidthPx - self.txtFileNameRightMargin - 80
                 self.txtFileName["width"] = self.txtFileNameWidth/12
                 self.txtFileName.resetFrameSize()
-            self.newFolderFrame.setPos(LPoint3f(0, 0, self.screenHeightPxHalf-55))
+            self.newFolderFrame.setPos(LPoint3f(0, 0, self.screenHeightPxHalf-(top+5)))
             self.newFolderFrame["frameSize"] = (-self.screenWidthPxHalf+10,self.screenWidthPxHalf-10,-20,20)
             self.txtNewFolderName.setPos(-self.screenWidthPxHalf+15, 0, -3)
             self.folderName.setPos(LPoint3f(-self.screenWidthPxHalf+25 + self.txtNewFolderName.getWidth(), 0, -4))

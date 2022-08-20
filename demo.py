@@ -28,6 +28,7 @@ browser = DirectFolderBrowser(
     # to enable dark mode, uncomment the folowing line
     #theme=DarkTheme(),
     askForOverwrite=True,
-    usePathBar=True)
+    usePathBar=True,
+    title="File Selection")
 
 app.run()
