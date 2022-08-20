@@ -27,6 +27,7 @@ browser = DirectFolderBrowser(
     fileBrowser=True,
     # to enable dark mode, uncomment the folowing line
     #theme=DarkTheme(),
-    askForOverwrite=True)
+    askForOverwrite=True,
+    usePathBar=True)
 
 app.run()

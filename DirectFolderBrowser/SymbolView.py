@@ -17,7 +17,7 @@ from panda3d.core import (
 )
 
 
-def generate(self, content):
+def generate(self, content, selected):
 
     # start position for the folders and files
     xPos = -self.screenWidthPxHalf + 20 + 50 - 110
@@ -58,10 +58,14 @@ def generate(self, content):
 
     for entry in sorted(dirList, key=getKey):
         moveNext(entry)
-        __createFolder(self, entry, xPos, zPos)
+        btn = __createFolder(self, entry, xPos, zPos)
+        if selected == entry:
+            btn["frameColor"] = self.theme.selected_background
     for entry in sorted(fileList, key=getKey):
         moveNext(entry)
-        __createFile(self, entry.name, xPos, zPos)
+        btn = __createFile(self, entry, xPos, zPos)
+        if selected == entry:
+            btn["frameColor"] = self.theme.selected_background
     for entry in sorted(unkList, key=getKey):
         moveNext(entry)
         __createUnknown(self, entry.name, xPos, zPos)
@@ -91,14 +95,16 @@ def __createFolder(self, entry, xPos, zPos):
         text_scale=12,
         text_pos=(0,-40),
         text_fg=self.theme.default_text_color,
-        command=self.folderMoveIn,
-        extraArgs=[entry.path]
+        command=self.folderClick,
     )
+    btn["extraArgs"] = [name, entry.path, btn]
     btn.bind(DGG.MWDOWN, self.scroll, [0.01])
     btn.bind(DGG.MWUP, self.scroll, [-0.01])
     btn.setTransparency(TransparencyAttrib.M_multisample)
+    return btn
 
-def __createFile(self, filename, xPos, zPos):
+def __createFile(self, entry, xPos, zPos):
+    filename = entry.name
     name = filename
     if len(filename) > 10:
         name = ""
@@ -119,12 +125,13 @@ def __createFile(self, filename, xPos, zPos):
         text_scale=12,
         text_pos=(0,-40),
         text_fg=self.theme.default_text_color,
-        command=self.txtFileName.set,
-        extraArgs=[filename]
+        command=self.fileClick,
     )
+    btn["extraArgs"] = [filename, entry.path, btn]
     btn.bind(DGG.MWDOWN, self.scroll, [0.01])
     btn.bind(DGG.MWUP, self.scroll, [-0.01])
     btn.setTransparency(TransparencyAttrib.M_multisample)
+    return btn
 
 def __createUnknown(self, filename, xPos, zPos):
     name = filename

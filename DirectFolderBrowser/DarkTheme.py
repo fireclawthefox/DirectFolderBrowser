@@ -36,6 +36,11 @@ class Theme:
         (0.1, 0.1, 0.1, 1)) # Disabled
     unknown_image_tint = (0.9, 0.5, 0.5, 1)
     dialog_color = (0.18, 0.18, 0.18, 1)
+    selected_background = (
+        (0.15, 0.15, 0.15, 1),
+        (0.25, 0.25, 0.45, 1),
+        (0.15, 0.15, 0.35, 1),
+        (0.05, 0.05, 0.05, 1))
 
     def __init__(self):
         fn = Filename.fromOsSpecific(os.path.dirname(__file__))

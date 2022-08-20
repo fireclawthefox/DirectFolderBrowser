@@ -24,6 +24,8 @@ from panda3d.core import (
     Filename,
     LoaderOptions,
     ATS_none,
+    ConfigVariableBool,
+    ConfigVariableString
 )
 
 from panda3d.core import PGButton, MouseButton
@@ -52,7 +54,9 @@ class DirectFolderBrowser(DirectObject):
             iconDir=None,
             parent=None,
             theme=None,
-            askForOverwrite=False):
+            askForOverwrite=False,
+            oneClickNavigate=True,
+            usePathBar=False):
         """
         A simple file and folder browser
 
@@ -73,6 +77,8 @@ class DirectFolderBrowser(DirectObject):
             The browser frame is placed centered so a frame for example should have equal sizes in horizontal and vertical directions
             e.g. frameSize=(-250,250,-200,200)
         askForOverwrite: If an existing file is selected, a dialog will pop up ask the user if the file should be overwritten.
+        oneClickNavigate: If true, navigating into folders is done with a single click rather than double. Also configurable via the boolean "DirectFolderBrowser-one-click-navigate" configuration variable
+        usePathBar: Determines if selected files should be set in the path bar or in a dedicated selected file bar
         """
         self.theme = theme if theme is not None else LightTheme()
         self.tt = tooltip
@@ -82,6 +88,12 @@ class DirectFolderBrowser(DirectObject):
         self.showHidden = False
         self.parent = parent
         self.askForOverwrite = askForOverwrite
+        self.selectedElement = ""
+        self.selectedBtn = None
+        self.selectedType = ""
+        self.oneClickNavigate = ConfigVariableBool("DirectFolderBrowser-one-click-navigate", oneClickNavigate).getValue()
+        self.defaultFilename = defaultFilename
+        self.usePathBar = usePathBar
 
         self.dlgOverwrite = None
         self.dlgBackground = None
@@ -97,7 +109,7 @@ class DirectFolderBrowser(DirectObject):
             self.iconDir = str(fn) + "/icons"
         else:
             self.iconDir = iconDir
-        self.selectedViewType = "Symbol"
+        self.selectedViewType = ConfigVariableString("DirectFolderBrowser-default-view", "Symbol").getValue()
 
         self.currentPath = os.path.expanduser(defaultPath)
         if not os.path.exists(self.currentPath):
@@ -124,6 +136,8 @@ class DirectFolderBrowser(DirectObject):
             parent=self.parent,
             state=DGG.NORMAL,
         )
+
+        self.mainFrame.bind(DGG.B1CLICK, self.deselect)
 
         self.pathRightMargin = 155 # NOTE: Add 28 for each button to the right + 15px margin
         self.pathEntryWidth = self.screenWidthPx - self.pathRightMargin - 28
@@ -303,7 +317,11 @@ class DirectFolderBrowser(DirectObject):
         )
 
         # SELECTED FILE ENTRY FIELD
-        if self.showFiles:
+        if self.showFiles and not self.usePathBar:
+            self.txtFileNameRightMargin = 180 # ok and cancel button width
+            # the - 100 at the end is the space between and outside of the
+            # buttons plus a little margin between the textbox and the buttons
+            self.txtFileNameWidth = self.screenWidthPx - self.txtFileNameRightMargin - 80
             self.txtFileName = DirectEntry(
                 text_fg=self.theme.default_text_color,
                 parent=self.mainFrame,
@@ -312,7 +330,7 @@ class DirectFolderBrowser(DirectObject):
                 pad=(0.2, 0.2),
                 pos=LPoint3f(-self.screenWidthPxHalf+25, 0, -self.screenHeightPxHalf+25),
                 scale=12,
-                width=200/12,
+                width=self.txtFileNameWidth/12,
                 overflow=True,
                 command=self.filenameAccept,
                 initialText=defaultFilename,
@@ -321,7 +339,6 @@ class DirectFolderBrowser(DirectObject):
                 focusOutCommand=base.messenger.send,
                 focusOutExtraArgs=["reregisterKeyboardEvents"],
             )
-
         # ------------------
         # CREATE NEW FOLDER
         # ------------------
@@ -404,9 +421,17 @@ class DirectFolderBrowser(DirectObject):
                     return
         self.command(arg)
 
+    def getFilename(self):
+        filename = self.selectedElement
+        if self.showFiles and not self.usePathBar:
+            filename = self.txtFileName.get(True)
+        return filename
+
     def runCheckCommand(self, arg):
+        filename = self.getFilename()
         if self.askForOverwrite \
-        and os.path.exists(self.get())\
+        and os.path.exists(self.get()) \
+        and (self.showFiles and self.defaultFilename != "") \
         and arg == 1:
             self.dlgBackground = DirectFrame(
                 # we want this backdrop frame to cover everything
@@ -416,7 +441,7 @@ class DirectFolderBrowser(DirectObject):
                 suppressKeys=True,
                 state=DGG.NORMAL)
             self.dlgOverwrite = YesNoDialog(
-                text=f"Overwrite?\n\nA file named \"{self.txtFileName.get(True)}\" already exist.\nDo you want to overwrite the existing file?",
+                text=f"Overwrite?\n\nA file named \"{filename}\" already exist.\nDo you want to overwrite the existing file?",
                 relief=DGG.RIDGE,
                 text_align=TextNode.ACenter,
                 frameColor=self.theme.dialog_color,
@@ -454,8 +479,12 @@ class DirectFolderBrowser(DirectObject):
         self.container.verticalScroll.scrollStep(scrollStep)
 
     def get(self):
-        if self.showFiles:
-            return os.path.join(self.currentPath, self.txtFileName.get(True))
+        filename = self.getFilename()
+        if self.showFiles and os.path.isdir(self.currentPath):
+            if not self.usePathBar \
+            or (self.selectedType == "file" and filename != ""):
+                return os.path.join(self.currentPath, filename)
+            return os.path.join(self.currentPath, self.defaultFilename)
         return self.currentPath
 
     def filenameAccept(self, filename):
@@ -465,7 +494,6 @@ class DirectFolderBrowser(DirectObject):
         self.folderReload()
 
     def folderReload(self):
-
         for element in self.container.getCanvas().getChildren():
             element.removeNode()
 
@@ -473,6 +501,9 @@ class DirectFolderBrowser(DirectObject):
         path = os.path.expanduser(path)
         path = os.path.expandvars(path)
         if not os.path.exists(path): return
+
+        if not os.path.isdir(path):
+            path = os.path.dirname(path)
         self.currentPath = path
 
         try:
@@ -485,15 +516,29 @@ class DirectFolderBrowser(DirectObject):
             return
 
         # start position for the folders and files
-        VIEWTYPE[self.selectedViewType](self, content)
+        VIEWTYPE[self.selectedViewType](self, content, self.selectedElement)
 
     def folderUp(self):
+        self.selectedElement = ""
         self.previousPath = self.currentPath
         self.currentPath = os.path.normpath(os.path.join(self.currentPath, ".."))
         self.pathEntry.set(self.currentPath)
         self.folderReload()
 
+    def folderClick(self, folderName, path, folderButton):
+        if self.selectedElement == folderName:
+            self.folderMoveIn(path)
+        else:
+            self.deselect()
+            self.selectedBtn = folderButton
+            self.selectedElement = folderName
+            self.selectedType = "folder"
+            folderButton["frameColor"] = self.theme.selected_background
+            if self.oneClickNavigate:
+                self.folderMoveIn(path)
+
     def folderMoveIn(self, path):
+        self.selectedElement = ""
         path = os.path.expanduser(path)
         path = os.path.expandvars(path)
         self.previousPath = self.currentPath
@@ -530,11 +575,30 @@ class DirectFolderBrowser(DirectObject):
         self.newFolderFrame.hide()
         self.folderReload()
 
+    def fileClick(self, filename, path, fileButton):
+        if self.selectedElement != filename:
+            self.deselect()
+            self.selectedBtn = fileButton
+            self.selectedElement = filename
+            self.selectedType = "file"
+            fileButton["frameColor"] = self.theme.selected_background
+            if self.usePathBar:
+                self.pathEntry.set(path)
+            else:
+                self.txtFileName.set(filename)
+
+    def deselect(self):
+        if self.selectedBtn is not None:
+            if self.selectedType == "folder":
+                self.selectedBtn["frameColor"] = self.theme.folder_background
+            elif self.selectedType == "file":
+                self.selectedBtn["frameColor"] = self.theme.file_background
+        self.selectedElement = ""
+
     def windowEventHandler(self, window=None):
         if window != base.win:
             # This event isn't about our window.
             return
-
 
         if window is not None: # window is none if panda3d is not started
             if self.prevScreenSize == base.getSize():
@@ -572,8 +636,11 @@ class DirectFolderBrowser(DirectObject):
             #       folder Reload call at the end of this function
             self.btnOk.setPos(LPoint3f(self.screenWidthPxHalf-160, 0, -self.screenHeightPxHalf+25))
             self.btnCancel.setPos(LPoint3f(self.screenWidthPxHalf-55, 0, -self.screenHeightPxHalf+25))
-            if self.showFiles:
+            if self.showFiles and not self.usePathBar:
                 self.txtFileName.setPos(LPoint3f(-self.screenWidthPxHalf+25, 0, -self.screenHeightPxHalf+25))
+                self.txtFileNameWidth = self.screenWidthPx - self.txtFileNameRightMargin - 80
+                self.txtFileName["width"] = self.txtFileNameWidth/12
+                self.txtFileName.resetFrameSize()
             self.newFolderFrame.setPos(LPoint3f(0, 0, self.screenHeightPxHalf-55))
             self.newFolderFrame["frameSize"] = (-self.screenWidthPxHalf+10,self.screenWidthPxHalf-10,-20,20)
             self.txtNewFolderName.setPos(-self.screenWidthPxHalf+15, 0, -3)

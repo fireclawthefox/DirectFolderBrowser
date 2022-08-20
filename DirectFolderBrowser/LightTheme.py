@@ -33,3 +33,8 @@ class Theme:
         (0.5, 0.5, 0.5, 1)) # Disabled
     unknown_image_tint = (0.9, 0.5, 0.5, 1)
     dialog_color = (0.9, 0.9, 0.9, 1)
+    selected_background = (
+        (0.05, 0.85, 0.85, 1), # Normal
+        (0.95, 0.95, 1, 1), # Click
+        (0.85, 0.85, 1, 1), # Hover
+        (0.55, 0.55, 0.55, 1)) # Disabled

@@ -23,7 +23,7 @@ mimetypes.init()
 TYPE_POS = 0#350
 SIZE_POS = 0#600
 
-def generate(self, content):
+def generate(self, content, selected):
 
     # start position for the folders and files
     xPos = -self.screenWidthPxHalf+32
@@ -63,10 +63,14 @@ def generate(self, content):
 
     for entry in sorted(dirList, key=getKey):
         moveNext(entry)
-        __createFolder(self, entry, xPos, zPos)
+        btn = __createFolder(self, entry, xPos, zPos)
+        if selected == entry:
+            btn["frameColor"] = self.theme.selected_background
     for entry in sorted(fileList, key=getKey):
         moveNext(entry)
-        __createFile(self, entry, xPos, zPos)
+        btn = __createFile(self, entry, xPos, zPos)
+        if selected == entry:
+            btn["frameColor"] = self.theme.selected_background
     for entry in sorted(unkList, key=getKey):
         moveNext(entry)
         __createUnknown(self, entry, xPos, zPos)
@@ -92,9 +96,9 @@ def __createFolder(self, entry, xPos, zPos):
         text_align=TextNode.ALeft,
         text_pos=(32,-4),
         text_fg=self.theme.default_text_color,
-        command=self.folderMoveIn,
-        extraArgs=[entry.path]
+        command=self.folderClick,
     )
+    btn["extraArgs"] = [name, entry.path, btn]
 
     lblInfo = __createMIMEInfo(self, btn, entry, True)
     #lblSize = __createSizeInfo(self, btn, entry)
@@ -102,6 +106,7 @@ def __createFolder(self, entry, xPos, zPos):
     btn.bind(DGG.MWDOWN, self.scroll, [0.01])
     btn.bind(DGG.MWUP, self.scroll, [-0.01])
     btn.setTransparency(TransparencyAttrib.M_multisample)
+    return btn
 
 def __createFile(self, entry, xPos, zPos):
     name = entry.name
@@ -119,9 +124,9 @@ def __createFile(self, entry, xPos, zPos):
         text_scale=12,
         text_pos=(32,-4),
         text_fg=self.theme.default_text_color,
-        command=self.txtFileName.set,
-        extraArgs=[entry.name]
+        command=self.fileClick,
     )
+    btn["extraArgs"] = [name, entry.path, btn]
 
     lblInfo = __createMIMEInfo(self, btn, entry)
     lblSize = __createSizeInfo(self, btn, entry)
@@ -129,6 +134,7 @@ def __createFile(self, entry, xPos, zPos):
     btn.bind(DGG.MWDOWN, self.scroll, [0.01])
     btn.bind(DGG.MWUP, self.scroll, [-0.01])
     btn.setTransparency(TransparencyAttrib.M_multisample)
+    return btn
 
 def __createUnknown(self, entry, xPos, zPos):
     name = entry.name
