@@ -64,12 +64,12 @@ def generate(self, content, selected):
     for entry in sorted(dirList, key=getKey):
         moveNext(entry)
         btn = __createFolder(self, entry, xPos, zPos)
-        if selected == entry:
+        if selected == entry.name:
             btn["frameColor"] = self.theme.selected_background
     for entry in sorted(fileList, key=getKey):
         moveNext(entry)
         btn = __createFile(self, entry, xPos, zPos)
-        if selected == entry:
+        if selected == entry.name:
             btn["frameColor"] = self.theme.selected_background
     for entry in sorted(unkList, key=getKey):
         moveNext(entry)

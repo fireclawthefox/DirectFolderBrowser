@@ -432,8 +432,15 @@ class DirectFolderBrowser(DirectObject):
         self.command(arg)
 
     def getFilename(self):
-        filename = self.selectedElement
-        if self.showFiles and not self.usePathBar:
+        filename = ""
+        if self.selectedType == "file":
+            filename = self.selectedElement
+        if self.usePathBar and self.selectedElement == "" and os.path.isdir(self.currentPath):
+            path = self.pathEntry.get(True)
+            if not os.path.isdir(path):
+                print(os.path.split(path)[1])
+                filename = os.path.split(path)[1]
+        elif self.showFiles and not self.usePathBar:
             filename = self.txtFileName.get(True)
         return filename
 
@@ -491,8 +498,7 @@ class DirectFolderBrowser(DirectObject):
     def get(self):
         filename = self.getFilename()
         if self.showFiles and os.path.isdir(self.currentPath):
-            if not self.usePathBar \
-            or (self.selectedType == "file" and filename != ""):
+            if filename != "":
                 return os.path.join(self.currentPath, filename)
             return os.path.join(self.currentPath, self.defaultFilename)
         return self.currentPath
@@ -510,7 +516,11 @@ class DirectFolderBrowser(DirectObject):
         path = self.pathEntry.get(True)
         path = os.path.expanduser(path)
         path = os.path.expandvars(path)
-        if not os.path.exists(path): return
+        if not os.path.exists(path):
+            if os.path.isdir(os.path.split(path)[0]):
+                path = os.path.split(path)[0]
+            else:
+                return
 
         if not os.path.isdir(path):
             path = os.path.dirname(path)
