@@ -15,6 +15,7 @@ from direct.gui.DirectScrolledFrame import DirectScrolledFrame
 from direct.gui.DirectButton import DirectButton
 from direct.gui.DirectLabel import DirectLabel
 from direct.gui.DirectDialog import YesNoDialog
+from direct.gui.DirectOptionMenu import DirectOptionMenu
 from panda3d.core import (
     LPoint3f,
     LVecBase3f,
@@ -57,7 +58,8 @@ class DirectFolderBrowser(DirectObject):
             askForOverwrite=False,
             oneClickNavigate=True,
             usePathBar=False,
-            title="Browser"):
+            title="Browser",
+            fileFilters={}):
         """
         A simple file and folder browser
 
@@ -81,6 +83,7 @@ class DirectFolderBrowser(DirectObject):
         oneClickNavigate: If true, navigating into folders is done with a single click rather than double. Also configurable via the boolean "DirectFolderBrowser-one-click-navigate" configuration variable
         usePathBar: Determines if selected files should be set in the path bar or in a dedicated selected file bar
         title: If a title is given it will create a title bar at the top of the browser frame displaying the title text, if title is an empty string, the title bar will be collapsed
+        fileFilters: A dictionary containing a display text as key and a list of file extension strings that should be used when selected. Will overwrite the fileExtensions parameter
         """
         self.theme = theme if theme is not None else LightTheme()
         self.tt = tooltip
@@ -97,6 +100,7 @@ class DirectFolderBrowser(DirectObject):
         self.defaultFilename = defaultFilename
         self.usePathBar = usePathBar
         self.title = title
+        self.fileFilters = fileFilters
 
         self.dlgOverwrite = None
         self.dlgBackground = None
@@ -298,6 +302,47 @@ class DirectFolderBrowser(DirectObject):
         self.container.bind(DGG.MWDOWN, self.scroll, [0.01])
         self.container.bind(DGG.MWUP, self.scroll, [-0.01])
 
+        # --------------
+        # LOWER SECTION
+        # --------------
+        # SELECTED FILE ENTRY FIELD
+        if self.showFiles and not self.usePathBar:
+            self.txtFileNameRightMargin = 180 # ok and cancel button width
+            self.lowerSectionRight = 190 if len(self.fileFilters) > 0 else 80
+            self.txtFileNameWidth = self.screenWidthPx - self.txtFileNameRightMargin - self.lowerSectionRight
+            self.txtFileName = DirectEntry(
+                text_fg=self.theme.default_text_color,
+                parent=self.mainFrame,
+                relief=DGG.SUNKEN,
+                frameColor=self.theme.entry_background,
+                pad=(0.2, 0.2),
+                pos=LPoint3f(-self.screenWidthPxHalf+25, 0, -self.screenHeightPxHalf+25),
+                scale=12,
+                width=self.txtFileNameWidth/12,
+                overflow=True,
+                command=self.filenameAccept,
+                initialText=defaultFilename,
+                focusInCommand=base.messenger.send,
+                focusInExtraArgs=["unregisterKeyboardEvents"],
+                focusOutCommand=base.messenger.send,
+                focusOutExtraArgs=["reregisterKeyboardEvents"],
+            )
+        if self.showFiles and len(self.fileFilters) > 0:
+            self.cmbFileFilters = DirectOptionMenu(
+                items=list(self.fileFilters.keys()),
+                parent=self.mainFrame,
+                scale=12,
+                relief=DGG.FLAT,
+                pos=LPoint3f(self.screenWidthPxHalf-320, 0, -self.screenHeightPxHalf+25),
+                command=self.folderReload,
+                extraArgs=[],
+                frameColor=self.theme.text_button_background,
+                highlightColor=self.theme.text_button_background[1],
+                frameSize=(
+                    -5/12, 100/12,
+                    -6/12, 14/12),
+            )
+
         # ACCEPT BUTTON
         self.btnOk = DirectButton(
             parent=self.mainFrame,
@@ -326,29 +371,6 @@ class DirectFolderBrowser(DirectObject):
             extraArgs=[0]
         )
 
-        # SELECTED FILE ENTRY FIELD
-        if self.showFiles and not self.usePathBar:
-            self.txtFileNameRightMargin = 180 # ok and cancel button width
-            # the - 100 at the end is the space between and outside of the
-            # buttons plus a little margin between the textbox and the buttons
-            self.txtFileNameWidth = self.screenWidthPx - self.txtFileNameRightMargin - 80
-            self.txtFileName = DirectEntry(
-                text_fg=self.theme.default_text_color,
-                parent=self.mainFrame,
-                relief=DGG.SUNKEN,
-                frameColor=self.theme.entry_background,
-                pad=(0.2, 0.2),
-                pos=LPoint3f(-self.screenWidthPxHalf+25, 0, -self.screenHeightPxHalf+25),
-                scale=12,
-                width=self.txtFileNameWidth/12,
-                overflow=True,
-                command=self.filenameAccept,
-                initialText=defaultFilename,
-                focusInCommand=base.messenger.send,
-                focusInExtraArgs=["unregisterKeyboardEvents"],
-                focusOutCommand=base.messenger.send,
-                focusOutExtraArgs=["reregisterKeyboardEvents"],
-            )
         # ------------------
         # CREATE NEW FOLDER
         # ------------------
@@ -509,7 +531,7 @@ class DirectFolderBrowser(DirectObject):
     def entryAccept(self, path):
         self.folderReload()
 
-    def folderReload(self):
+    def folderReload(self, skipArgs=None):
         for element in self.container.getCanvas().getChildren():
             element.removeNode()
 
@@ -534,6 +556,9 @@ class DirectFolderBrowser(DirectObject):
             self.currentPath = self.previousPath
             self.folderReload()
             return
+
+        if len(self.fileFilters) > 0:
+            self.fileExtensions = self.fileFilters[self.cmbFileFilters.get()]
 
         # start position for the folders and files
         VIEWTYPE[self.selectedViewType](self, content, self.selectedElement)
@@ -661,9 +686,11 @@ class DirectFolderBrowser(DirectObject):
             self.btnCancel.setPos(LPoint3f(self.screenWidthPxHalf-55, 0, -self.screenHeightPxHalf+25))
             if self.showFiles and not self.usePathBar:
                 self.txtFileName.setPos(LPoint3f(-self.screenWidthPxHalf+25, 0, -self.screenHeightPxHalf+25))
-                self.txtFileNameWidth = self.screenWidthPx - self.txtFileNameRightMargin - 80
+                self.txtFileNameWidth = self.screenWidthPx - self.txtFileNameRightMargin - self.lowerSectionRight
                 self.txtFileName["width"] = self.txtFileNameWidth/12
                 self.txtFileName.resetFrameSize()
+            if self.showFiles and len(self.fileFilters) > 0:
+                self.cmbFileFilters.setPos(LPoint3f(self.screenWidthPxHalf-320, 0, -self.screenHeightPxHalf+25))
             self.newFolderFrame.setPos(LPoint3f(0, 0, self.screenHeightPxHalf-(top+5)))
             self.newFolderFrame["frameSize"] = (-self.screenWidthPxHalf+10,self.screenWidthPxHalf-10,-20,20)
             self.txtNewFolderName.setPos(-self.screenWidthPxHalf+15, 0, -3)
